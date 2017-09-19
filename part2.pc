@@ -1,0 +1,164 @@
+#include <stdio.h>
+#include <string.h>
+
+
+exec sql include sqlca;
+
+exec sql begin declare section;
+	char sqlstmt [1024];
+	char sqlstmt1[1024];
+	char sqlstmt2[1024];
+
+	char displayTable[11];
+
+
+	char SNO[3];
+	char SNAME[10];
+	int STATUS;
+	char sCITY[10];
+
+	char PNO[3];
+	char PNAME[10];
+	char COLOR[7];
+	int WEIGHT;
+	char pCITY[7];
+
+	char SP_SNO[3];
+	char SP_PNO[3];
+	int QTY;
+	
+
+
+	char *username = "oracle";
+	char *password = "oracle11g";
+
+	exec sql end declare section;
+
+	int main (){
+
+	exec sql declare s_cursor cursor for
+	select *
+	from Suppliers;
+
+	exec sql declare s_cursor cursor for
+	select *
+	from Parts;
+
+	exec sql declare s_cursor cursor for
+	select *
+	from Sp;
+
+	exec sql connect :username identified by :password;
+	if(sqlca.sqlcode == 0)
+		printf("Oracle connected\n");
+	else
+		printf("Oracle not conected\n");
+
+	strcpy (sqlstmt , "create table Suppliers(SNO varchar(2) PRIMARY KEY, SNAME varchar(5), STATUS int, SCITY varchar(7))");
+
+	exec sql set transaction read write;
+	printf("\nexecute immediate \n%80s \n",sqlstmt);
+	exec sql execute immediate :sqlstmt;
+
+	if(sqlca.sqlcode == 0)
+		printf("Table created\n");
+	else
+		printf("Table not created\n");
+
+	strcpy (sqlstmt1, "create table Parts(PNO varchar(2) PRIMARY KEY, PNAME varchar(5), COLOR varchar(6), WEIGHT int, PCITY varchar(6))");
+
+	exec sql set transaction read write;
+	printf("\nexecute immediate \n%80s \n",sqlstmt1);
+	exec sql execute immediate :sqlstmt1;
+
+	if(sqlca.sqlcode == 0)
+		printf("Parts table created\n");
+	else
+		printf("Parts table not created\n");
+
+
+	strcpy (sqlstmt2 , "create table SP (SNO varchar(2), PNO varchar(2), QTY int, FOREIGN KEY (SNO) REFERENCES Suppliers, FOREIGN KEY (PNO) REFERENCES Parts)");
+
+	exec sql set transaction read write;
+	printf("\nexecute immediate \n%80s \n",sqlstmt2);
+	exec sql execute immediate :sqlstmt2;
+
+	if(sqlca.sqlcode == 0)
+		printf("SP table created\n");
+	else
+		printf("SP table not created\n");
+
+
+	printf("Type the table name that you would like to enter (Suppliers, Parts, SP)  :    ");
+	scanf("%s", &displayTable);
+
+	if ( displayTable == "Suppliers")
+	{
+		strcpy(sqlstmt, "insert into Suppliers(SNO,SNAME,STATUS,CITY) values (:v1 , :v2, :v3, :v4)");
+
+		exec sql prepare s from : sqlstmt;
+
+		if(sqlca.sqlcode == 0)
+			printf("statement prepared \n");
+		else
+			printf("statement not prepared \n");
+
+
+		for(int i = 0; i < 5; i ++)
+		{
+			printf("Enter Suppliers:  ");
+			scanf("%s", SNO);
+
+			printf("Enter Suppliers Name:  ");
+			scanf("%d", SNAME);
+
+			printf("Enter Suppliers Status");
+			scanf("%d", STATUS);
+
+			printf("Enter Supplier City:  ");
+			scanf("%s",CITY);
+
+			exec sql execute s using :SNO, : SNAME, :STATUS, :CITY;
+
+			f(sqlca.sqlcode == 0)
+				printf("Inserted\n");
+			else
+				printf("Insertion failed \n");
+
+		}	
+
+	}
+
+
+
+	exec sql execute immediate "drop table SP";
+	if (sqlca.sqlcode == 0)
+		printf("\nSP Table dropped\n");
+	else
+		printf("SP Table not dropped");
+
+
+	exec sql execute immediate "drop table Suppliers";
+	if (sqlca.sqlcode == 0)
+		printf("\nSuppliers Table dropped\n");
+	else
+		printf("Suppliers Table not dropped");
+
+	exec sql execute immediate "drop table Parts";
+	if (sqlca.sqlcode == 0)
+		printf("\nParts Table dropped\n");
+	else
+		printf("Parts Table not dropped");
+
+
+
+
+
+	exec sql commit release;
+
+	exit(0);
+
+
+
+
+}

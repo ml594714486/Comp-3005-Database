@@ -1,0 +1,80 @@
+#include <stdio.h>
+#include <string.h>
+
+
+exec sql include sqlca;
+
+exec sql begin declare section;
+	char sqlstmt [1024];
+	char sqlstmt1[1024];
+	char sqlstmt2[1024];
+	
+
+	char *username = "oracle";
+	char *password = "oracle11g";
+
+	exec sql end declare section;
+
+	int main (){
+
+	exec sql connect :username identified by :password;
+	if(sqlca.sqlcode == 0)
+		printf("Oracle connected\n");
+	else
+		printf("Oracle not conected\n");
+
+	strcpy (sqlstmt , "create table Suppliers(SNO varchar(2) PRIMARY KEY, SNAME varchar(5), STATUS int, CITY varchar(6))");
+
+	exec sql set transaction read write;
+	printf("execute immediate \n%80s \n",sqlstmt);
+	exec sql execute immediate :sqlstmt;
+
+	if(sqlca.sqlcode == 0)
+		printf("Table created\n");
+	else
+		printf("Table not created\n");
+
+	exec sql execute immediate 
+		"create table Parts(PNO varchar(2) PRIMARY KEY, PNAME varchar(5), COLOR VARCHAR(5), WEIGHT int, CITY varchar(6))";
+
+	if(sqlca.sqlcode == 0)
+		printf("Parts table created\n");
+	else
+		printf("Parts table not created\n");
+
+
+	exec sql execute immediate
+	"create table SP (SNO varchar(2), PNO varchar(2), QTY int, FOREIGN KEY (SNO) REFERENCES Suppliers, FOREIGN KEY (PNO) REFERENCES Parts)";
+
+	if(sqlca.sqlcode == 0)
+		printf("SP table created\n");
+	else
+		printf("SP table not created\n");
+
+
+	exec sql execute immediate "drop table SP";
+	if (sqlca.sqlcode == 0)
+		printf("SP Table dropped\n");
+	else
+		printf("SP Table not dropped");
+
+		exec sql execute immediate "drop table Suppliers";
+	if (sqlca.sqlcode == 0)
+		printf("Suppliers Table dropped\n");
+	else
+		printf("Suppliers Table not dropped");	
+
+	exec sql execute immediate "drop table Parts";
+	if (sqlca.sqlcode == 0)
+		printf("Parts Table dropped\n");
+	else
+		printf("Parts Table not dropped");
+
+	exec sql commit release;
+
+	exit(0);
+
+
+
+
+}
